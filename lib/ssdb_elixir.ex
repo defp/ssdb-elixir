@@ -1,0 +1,2 @@
+defmodule SSDB do
+end

@@ -1,4 +1,5 @@
 SSDB
 ====
 
-** TODO: Add description **
+ssdb client for Elixir
+

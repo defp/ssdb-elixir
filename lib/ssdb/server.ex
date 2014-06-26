@@ -22,12 +22,8 @@ defmodule SSDB.Server do
     end
   end
 
-  def handle_call({command, key, value}, from, state) do
-    query(state, from, [command, key, value])
-  end
-
-  def handle_call({command, key}, from, state) do
-    query(state, from, [command, key])
+  def handle_call({:request, req}, from, state) do
+    query(state, from, req)
   end
 
   def handle_info({:tcp, socket, data}, state) do
@@ -40,7 +36,6 @@ defmodule SSDB.Server do
   end
 
   defp handle_response(data, state) do
-    # parse response
     new_queue = reply(parse(data), state.queue)
     %State{state | queue: new_queue}
   end
@@ -56,8 +51,7 @@ defmodule SSDB.Server do
   end
 
   defp query(state, from, request) do
-    req_bin = to_binary(request)
-    case :gen_tcp.send(state.socket, req_bin) do
+    case :gen_tcp.send(state.socket, request) do
       :ok ->
         new_queue = :queue.in(from, state.queue)
         state = %State{state | queue: new_queue}
@@ -67,10 +61,6 @@ defmodule SSDB.Server do
     end
   end
 
-  defp to_binary(args) do
-    args_bin = Enum.map(args, fn(arg) -> "#{byte_size(arg)}\n#{arg}\n" end)
-    args_bin ++ ["\n"]
-  end
 
   @socket_options [:binary, {:active, :once}, {:packet, :raw}, {:reuseaddr, true}]
   defp connect(state) do

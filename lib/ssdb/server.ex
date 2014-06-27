@@ -40,10 +40,6 @@ defmodule SSDB.Server do
     %State{state | queue: new_queue}
   end
 
-  defp parse(data) do
-    data
-  end
-
   defp reply(value, queue) do
     {{:value, from}, new_queue} = :queue.out(queue)
     :gen_server.reply(from, value)
@@ -71,5 +67,18 @@ defmodule SSDB.Server do
       {:error, reason} ->
         {:error, reason}
     end
+  end
+
+  defp parse("\n") do
+    []
+  end
+
+  defp parse(data) do
+    {offset, _} = :binary.match(data, "\n")
+    size = String.to_integer(binary_part(data, 0, offset))
+    value = binary_part(data, offset + 1, size)
+
+    len = offset + 1 + size + 1
+    [value] ++ parse(binary_part(data, len, byte_size(data) - len))
   end
 end

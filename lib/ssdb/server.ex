@@ -36,7 +36,11 @@ defmodule SSDB.Server do
   end
 
   defp handle_response(data, state) do
-    new_queue = reply(parse(data), state.queue)
+    new_queue = data
+                |> parse_binary
+                |> parse_response
+                |> reply(state.queue)
+    # new_queue = reply(parse(data), state.queue)
     %State{state | queue: new_queue}
   end
 
@@ -69,12 +73,23 @@ defmodule SSDB.Server do
     end
   end
 
-  defp parse("\n"), do: []
-  defp parse(""), do: []
+  defp parse_binary(""), do: []
+  defp parse_binary("\n"), do: []
 
-  defp parse(binary) do
+  defp parse_binary(binary) do
     {size, "\n" <> rest} = Integer.parse(binary)
     <<chunk :: [binary, size(size)], "\n", rest :: binary>> = rest
-    [chunk|parse(rest)]
+    [chunk|parse_binary(rest)]
+  end
+
+  defp parse_response(response) do
+    [status | values] = response
+    case status do
+      "ok" -> {:ok, values}
+      "not_found" -> {:not_found, values}
+      "error" -> {:error, values}
+      "fail" -> {:fail, values}
+      "client_error" -> {:client_error, values}
+    end
   end
 end

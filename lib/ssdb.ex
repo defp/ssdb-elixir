@@ -1,4 +1,9 @@
 defmodule SSDB do
+
+  @type key :: binary | atom
+  @type value :: binary | atom | integer
+
+
   def start(options \\  []) do
     GenServer.start SSDB.Server, options, []
   end
@@ -19,12 +24,26 @@ defmodule SSDB do
     call(pid, ["del", key])
   end
 
-  defp call(pid, request) do
-    GenServer.call(pid, {:request, to_binary(request)})
+  def exists(pid, key) do
+    call(pid, ["exists", key])
   end
 
-  defp to_binary(args) do
-    bin = Enum.map(args, fn(arg) -> "#{byte_size(arg)}\n#{arg}\n" end)
+  def multi_get(pid, keys) do 
+    call(pid, ["multi_get" | keys])
+  end
+
+  defp call(pid, request) do
+    GenServer.call(pid, {:request, create_request(request)})
+  end
+
+  defp create_request(args) do
+    bin = Enum.map(Enum.map(args, fn(arg) -> to_binary(arg) end),
+      fn(arg) -> "#{byte_size(arg)}\n#{arg}\n" end)
     bin ++ ["\n"]
   end
+
+  defp to_binary(x) when is_binary(x), do: x
+  defp to_binary(x) when is_integer(x), do: Integer.to_string(x)
+  defp to_binary(x) when is_atom(x), do: Atom.to_string(x)
+  defp to_binary(x) when is_list(x), do: List.to_string(x)
 end

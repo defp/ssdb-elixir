@@ -69,16 +69,12 @@ defmodule SSDB.Server do
     end
   end
 
-  defp parse("\n") do
-    []
-  end
+  defp parse("\n"), do: []
+  defp parse(""), do: []
 
-  defp parse(data) do
-    {offset, _} = :binary.match(data, "\n")
-    size = String.to_integer(binary_part(data, 0, offset))
-    value = binary_part(data, offset + 1, size)
-
-    len = offset + 1 + size + 1
-    [value] ++ parse(binary_part(data, len, byte_size(data) - len))
+  defp parse(binary) do
+    {size, "\n" <> rest} = Integer.parse(binary)
+    <<chunk :: [binary, size(size)], "\n", rest :: binary>> = rest
+    [chunk|parse(rest)]
   end
 end

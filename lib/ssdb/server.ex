@@ -36,24 +36,24 @@ defmodule SSDB.Server do
   end
 
   defp handle_response(data, state) do
-    new_queue = data
-                |> parse_binary
-                |> parse_response
+    new_queue = data 
+                |> parse_binary 
                 |> reply(state.queue)
-    # new_queue = reply(parse(data), state.queue)
     %State{state | queue: new_queue}
   end
 
   defp reply(value, queue) do
-    {{:value, from}, new_queue} = :queue.out(queue)
-    :gen_server.reply(from, value)
+    {{:value, {from, command}}, new_queue} = :queue.out(queue)
+    response = ssdb_response(value, command)
+    :gen_server.reply(from, response)
     new_queue
   end
 
   defp query(state, from, request) do
-    case :gen_tcp.send(state.socket, request) do
+    command = List.first(request)
+    case :gen_tcp.send(state.socket, create_request(request)) do
       :ok ->
-        new_queue = :queue.in(from, state.queue)
+        new_queue = :queue.in({from, command}, state.queue)
         state = %State{state | queue: new_queue}
         {:noreply, state}
       {:error, reason} ->
@@ -82,7 +82,18 @@ defmodule SSDB.Server do
     [chunk|parse_binary(rest)]
   end
 
-  defp parse_response(response) do
+  defp create_request(args) do
+    bin = Enum.map(Enum.map(args, fn(arg) -> to_binary(arg) end),
+      fn(arg) -> "#{byte_size(arg)}\n#{arg}\n" end)
+    bin ++ ["\n"]
+  end
+
+  defp to_binary(x) when is_binary(x), do: x
+  defp to_binary(x) when is_integer(x), do: Integer.to_string(x)
+  defp to_binary(x) when is_atom(x), do: Atom.to_string(x)
+  defp to_binary(x) when is_list(x), do: List.to_string(x)
+
+  defp ssdb_response(response, command) do
     [status | values] = response
     case status do
       "ok" -> {:ok, values}
@@ -92,4 +103,5 @@ defmodule SSDB.Server do
       "client_error" -> {:client_error, values}
     end
   end
+
 end

@@ -109,48 +109,49 @@ defmodule SSDB.Server do
   end
 
   @bool_reply ["exists", "hexists", "zexists"]
-  for cmd <- @bool_reply do
-    defp get_reply(unquote(cmd), values) do
-      List.first(values) == "1"
-    end
-  end
-
   @multi_reply ["keys", "zkeys", "hkeys", "hlist", "zlist", "qslice"]
-  for cmd <- @multi_reply do
-    defp get_reply(unquote(cmd), values) do
-      values
-    end
-  end
-
   @multi_bool_reply ["multi_exists", "multi_hexists", "multi_zexists"]
-  for cmd <- @multi_bool_reply do
-    defp get_reply(unquote(cmd), values) do
-      list_to_bool_map(values)
-    end
-  end
-
   @kv_reply ["scan","rscan","zscan","zrscan","zrange","zrrange","hscan","hrscan",
     "hgetall","multi_hsize","multi_zsize","multi_get","multi_hget","multi_zget"]
-  for cmd <- @kv_reply do
-    defp get_reply(unquote(cmd), values) do
-      list_to_map(values)
-    end
-  end
-
   @single_reply ["get","substr","getset","hget","qget","qfront", "qback",
     "qpop","qpop_front","qpop_back"]
-  for cmd <- @single_reply do
-    defp get_reply(unquote(cmd), values) do
-      List.first(values)
-    end
-  end
-
   @false_or_value_reply ["getbit", "setbit", "countbit", "strlen", "set", "setx",
     "setnx", "zset", "hset", "qpush", "qpush_front", "qpush_back", "del", "zdel",
     "hdel", "hsize", "zsize", "qsize", "hclear", "zclear", "qclear", "multi_set",
     "multi_del", "multi_hset", "multi_hdel", "multi_zset", "multi_zdel", "incr",
     "decr", "zincr", "zdecr", "hincr", "hdecr", "zget", "zrank", "zrrank", "zcount",
     "zsum", "zremrangebyrank", "zremrangebyscore"]
+
+  for cmd <- @bool_reply do
+    defp get_reply(unquote(cmd), values) do
+      List.first(values) == "1"
+    end
+  end
+
+  for cmd <- @multi_reply do
+    defp get_reply(unquote(cmd), values) do
+      values
+    end
+  end
+
+  for cmd <- @multi_bool_reply do
+    defp get_reply(unquote(cmd), values) do
+      list_to_bool_map(values)
+    end
+  end
+
+  for cmd <- @kv_reply do
+    defp get_reply(unquote(cmd), values) do
+      list_to_map(values)
+    end
+  end
+
+  for cmd <- @single_reply do
+    defp get_reply(unquote(cmd), values) do
+      List.first(values)
+    end
+  end
+
   for cmd <-@false_or_value_reply do
     defp get_reply(unquote(cmd), values) do
       value = List.first(values)
@@ -163,14 +164,14 @@ defmodule SSDB.Server do
 
   defp list_to_map([]), do: %{}
   defp list_to_map(list) do
-    [key, value | rest] = list 
+    [key, value | rest] = list
     map = Map.put(%{}, key, value)
     Map.merge(map, list_to_map(rest))
   end
 
   defp list_to_bool_map([]), do: %{}
   defp list_to_bool_map(list) do
-    [key, value | rest] = list 
+    [key, value | rest] = list
     map = Map.put(%{}, key, value == "1")
     Map.merge(map, list_to_map(rest))
   end

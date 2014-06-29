@@ -22,17 +22,46 @@ defmodule SSDB.Server do
     end
   end
 
+  def stop(pid) do
+    GenServer.call(pid, :stop)
+  end
+
   def handle_call({:request, req}, from, state) do
     query(state, from, req)
   end
 
-  def handle_info({:tcp, socket, data}, state) do
+  def handle_call(:stop, _from, state) do
+    {:stop, :normal, :ok, state}
+  end
+
+  def handle_info({:tcp, socket, data}, %State{socket: socket} = state) do
     :ok = :inet.setopts(socket, [{:active, :once}])
     {:noreply, handle_response(data, state)}
   end
 
+  def handle_info({:tcp, socket, _}, %State{socket: our_socket} = state) 
+    when our_socket != socket do
+      {:noreply, state}
+  end
+
   def handle_info({:tcp_error, _socket, _reason}, state) do
     {:noreply, state}
+  end
+
+  def handle_info({:tcp_closed, _socket}, %State{queue: queue} = state) do
+    reply_all({:error, :tcp_closed}, queue)
+    {:stop, :normal, %{state | socket: nil}}
+  end
+
+  def terminate(_reason, state) do
+    case state.socket do 
+      nil -> :ok
+      socket -> :gen_tcp.close(socket)
+    end
+  end
+
+  def code_change(_oldvsn, state, _extra) do
+    {:ok, state}
   end
 
   defp handle_response(data, state) do
@@ -45,8 +74,17 @@ defmodule SSDB.Server do
   defp reply(value, queue) do
     {{:value, {from, command}}, new_queue} = :queue.out(queue)
     response = ssdb_response(value, command)
-    :gen_server.reply(from, response)
+    GenServer.reply(from, response)
     new_queue
+  end
+
+  defp reply_all(value, queue) do 
+    case :queue.peek(queue) do
+      :empty -> :ok
+      {:value, {from, _}} -> 
+        GenServer.reply(from, value)
+        reply_all(value, :queue.drop(queue))
+    end
   end
 
   defp query(state, from, request) do
@@ -104,10 +142,6 @@ defmodule SSDB.Server do
     end
   end
 
-  defp get_reply("zavg", values) do
-    List.first(values) |> String.to_float
-  end
-
   @bool_reply ["exists", "hexists", "zexists"]
   @multi_reply ["keys", "zkeys", "hkeys", "hlist", "zlist", "qslice"]
   @multi_bool_reply ["multi_exists", "multi_hexists", "multi_zexists"]
@@ -121,6 +155,10 @@ defmodule SSDB.Server do
     "multi_del", "multi_hset", "multi_hdel", "multi_zset", "multi_zdel", "incr",
     "decr", "zincr", "zdecr", "hincr", "hdecr", "zget", "zrank", "zrrank", "zcount",
     "zsum", "zremrangebyrank", "zremrangebyscore"]
+
+  defp get_reply("zavg", values) do
+    List.first(values) |> String.to_float
+  end
 
   for cmd <- @bool_reply do
     defp get_reply(unquote(cmd), values) do

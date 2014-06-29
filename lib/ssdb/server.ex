@@ -22,17 +22,46 @@ defmodule SSDB.Server do
     end
   end
 
+  def stop(pid) do
+    GenServer.call(pid, :stop)
+  end
+
   def handle_call({:request, req}, from, state) do
     query(state, from, req)
   end
 
-  def handle_info({:tcp, socket, data}, state) do
+  def handle_call(:stop, _from, state) do
+    {:stop, :normal, :ok, state}
+  end
+
+  def handle_info({:tcp, socket, data}, %State{socket: socket} = state) do
     :ok = :inet.setopts(socket, [{:active, :once}])
     {:noreply, handle_response(data, state)}
   end
 
+  def handle_info({:tcp, socket, _}, %State{socket: our_socket} = state)
+    when our_socket != socket do
+      {:noreply, state}
+  end
+
   def handle_info({:tcp_error, _socket, _reason}, state) do
     {:noreply, state}
+  end
+
+  def handle_info({:tcp_closed, _socket}, %State{queue: queue} = state) do
+    reply_all({:error, :tcp_closed}, queue)
+    {:stop, :normal, %{state | socket: nil}}
+  end
+
+  def terminate(_reason, state) do
+    case state.socket do
+      nil -> :ok
+      socket -> :gen_tcp.close(socket)
+    end
+  end
+
+  def code_change(_oldvsn, state, _extra) do
+    {:ok, state}
   end
 
   defp handle_response(data, state) do
@@ -45,8 +74,17 @@ defmodule SSDB.Server do
   defp reply(value, queue) do
     {{:value, {from, command}}, new_queue} = :queue.out(queue)
     response = ssdb_response(value, command)
-    :gen_server.reply(from, response)
+    GenServer.reply(from, response)
     new_queue
+  end
+
+  defp reply_all(value, queue) do
+    case :queue.peek(queue) do
+      :empty -> :ok
+      {:value, {from, _}} ->
+        GenServer.reply(from, value)
+        reply_all(value, :queue.drop(queue))
+    end
   end
 
   defp query(state, from, request) do
@@ -100,57 +138,58 @@ defmodule SSDB.Server do
       "not_found" -> {:not_found}
       "error" -> {:error, List.first(values)}
       "fail" -> {:fail, List.first(values)}
-      "client_error" -> {:client_error, List.first(values)}
+      "client_error" -> {:client_error}
     end
   end
+
+  @bool_reply ["exists", "hexists", "zexists", "set", "del", "setnx"]
+  @multi_reply ["keys", "zkeys", "hkeys", "hlist", "zlist", "qslice"]
+  @multi_bool_reply ["multi_exists", "multi_hexists", "multi_zexists"]
+  @kv_reply ["scan","rscan","zscan","zrscan","zrange","zrrange","hscan","hrscan",
+    "hgetall","multi_hsize","multi_zsize","multi_get","multi_hget","multi_zget"]
+  @single_reply ["get","substr","getset","hget","qget","qfront", "qback",
+    "qpop","qpop_front","qpop_back", "incr", "getbit", "setbit"]
+  @false_or_value_reply ["countbit", "strlen", "setx",
+    "zset", "hset", "qpush", "qpush_front", "qpush_back","zdel", "hdel", "hsize",
+    "zsize", "qsize", "hclear", "zclear", "qclear", "multi_set", "ttl",
+    "multi_del", "multi_hset", "multi_hdel", "multi_zset", "multi_zdel",
+    "decr", "zincr", "zdecr", "hincr", "hdecr", "zget", "zrank", "zrrank", "zcount",
+    "zsum", "zremrangebyrank", "zremrangebyscore"]
 
   defp get_reply("zavg", values) do
     List.first(values) |> String.to_float
   end
 
-  @bool_reply ["exists", "hexists", "zexists"]
   for cmd <- @bool_reply do
     defp get_reply(unquote(cmd), values) do
       List.first(values) == "1"
     end
   end
 
-  @multi_reply ["keys", "zkeys", "hkeys", "hlist", "zlist", "qslice"]
   for cmd <- @multi_reply do
     defp get_reply(unquote(cmd), values) do
       values
     end
   end
 
-  @multi_bool_reply ["multi_exists", "multi_hexists", "multi_zexists"]
   for cmd <- @multi_bool_reply do
     defp get_reply(unquote(cmd), values) do
       list_to_bool_map(values)
     end
   end
 
-  @kv_reply ["scan","rscan","zscan","zrscan","zrange","zrrange","hscan","hrscan",
-    "hgetall","multi_hsize","multi_zsize","multi_get","multi_hget","multi_zget"]
   for cmd <- @kv_reply do
     defp get_reply(unquote(cmd), values) do
       list_to_map(values)
     end
   end
 
-  @single_reply ["get","substr","getset","hget","qget","qfront", "qback",
-    "qpop","qpop_front","qpop_back"]
   for cmd <- @single_reply do
     defp get_reply(unquote(cmd), values) do
       List.first(values)
     end
   end
 
-  @false_or_value_reply ["getbit", "setbit", "countbit", "strlen", "set", "setx",
-    "setnx", "zset", "hset", "qpush", "qpush_front", "qpush_back", "del", "zdel",
-    "hdel", "hsize", "zsize", "qsize", "hclear", "zclear", "qclear", "multi_set",
-    "multi_del", "multi_hset", "multi_hdel", "multi_zset", "multi_zdel", "incr",
-    "decr", "zincr", "zdecr", "hincr", "hdecr", "zget", "zrank", "zrrank", "zcount",
-    "zsum", "zremrangebyrank", "zremrangebyscore"]
   for cmd <-@false_or_value_reply do
     defp get_reply(unquote(cmd), values) do
       value = List.first(values)
@@ -163,14 +202,14 @@ defmodule SSDB.Server do
 
   defp list_to_map([]), do: %{}
   defp list_to_map(list) do
-    [key, value | rest] = list 
+    [key, value | rest] = list
     map = Map.put(%{}, key, value)
     Map.merge(map, list_to_map(rest))
   end
 
   defp list_to_bool_map([]), do: %{}
   defp list_to_bool_map(list) do
-    [key, value | rest] = list 
+    [key, value | rest] = list
     map = Map.put(%{}, key, value == "1")
     Map.merge(map, list_to_map(rest))
   end

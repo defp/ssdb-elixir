@@ -39,7 +39,7 @@ defmodule SSDB.Server do
     {:noreply, handle_response(data, state)}
   end
 
-  def handle_info({:tcp, socket, _}, %State{socket: our_socket} = state) 
+  def handle_info({:tcp, socket, _}, %State{socket: our_socket} = state)
     when our_socket != socket do
       {:noreply, state}
   end
@@ -54,7 +54,7 @@ defmodule SSDB.Server do
   end
 
   def terminate(_reason, state) do
-    case state.socket do 
+    case state.socket do
       nil -> :ok
       socket -> :gen_tcp.close(socket)
     end
@@ -78,10 +78,10 @@ defmodule SSDB.Server do
     new_queue
   end
 
-  defp reply_all(value, queue) do 
+  defp reply_all(value, queue) do
     case :queue.peek(queue) do
       :empty -> :ok
-      {:value, {from, _}} -> 
+      {:value, {from, _}} ->
         GenServer.reply(from, value)
         reply_all(value, :queue.drop(queue))
     end
@@ -142,17 +142,17 @@ defmodule SSDB.Server do
     end
   end
 
-  @bool_reply ["exists", "hexists", "zexists", "set", "del"]
+  @bool_reply ["exists", "hexists", "zexists", "set", "del", "setnx"]
   @multi_reply ["keys", "zkeys", "hkeys", "hlist", "zlist", "qslice"]
   @multi_bool_reply ["multi_exists", "multi_hexists", "multi_zexists"]
   @kv_reply ["scan","rscan","zscan","zrscan","zrange","zrrange","hscan","hrscan",
     "hgetall","multi_hsize","multi_zsize","multi_get","multi_hget","multi_zget"]
   @single_reply ["get","substr","getset","hget","qget","qfront", "qback",
-    "qpop","qpop_front","qpop_back"]
-  @false_or_value_reply ["getbit", "setbit", "countbit", "strlen", "setx", "setnx", 
-    "zset", "hset", "qpush", "qpush_front", "qpush_back","zdel", "hdel", "hsize", 
+    "qpop","qpop_front","qpop_back", "incr", "getbit", "setbit"]
+  @false_or_value_reply ["countbit", "strlen", "setx",
+    "zset", "hset", "qpush", "qpush_front", "qpush_back","zdel", "hdel", "hsize",
     "zsize", "qsize", "hclear", "zclear", "qclear", "multi_set", "ttl",
-    "multi_del", "multi_hset", "multi_hdel", "multi_zset", "multi_zdel", "incr",
+    "multi_del", "multi_hset", "multi_hdel", "multi_zset", "multi_zdel",
     "decr", "zincr", "zdecr", "hincr", "hdecr", "zget", "zrank", "zrrank", "zcount",
     "zsum", "zremrangebyrank", "zremrangebyscore"]
 

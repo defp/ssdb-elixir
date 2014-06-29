@@ -138,20 +138,20 @@ defmodule SSDB.Server do
       "not_found" -> {:not_found}
       "error" -> {:error, List.first(values)}
       "fail" -> {:fail, List.first(values)}
-      "client_error" -> {:client_error, List.first(values)}
+      "client_error" -> {:client_error}
     end
   end
 
-  @bool_reply ["exists", "hexists", "zexists"]
+  @bool_reply ["exists", "hexists", "zexists", "set", "del"]
   @multi_reply ["keys", "zkeys", "hkeys", "hlist", "zlist", "qslice"]
   @multi_bool_reply ["multi_exists", "multi_hexists", "multi_zexists"]
   @kv_reply ["scan","rscan","zscan","zrscan","zrange","zrrange","hscan","hrscan",
     "hgetall","multi_hsize","multi_zsize","multi_get","multi_hget","multi_zget"]
   @single_reply ["get","substr","getset","hget","qget","qfront", "qback",
     "qpop","qpop_front","qpop_back"]
-  @false_or_value_reply ["getbit", "setbit", "countbit", "strlen", "set", "setx",
-    "setnx", "zset", "hset", "qpush", "qpush_front", "qpush_back", "del", "zdel",
-    "hdel", "hsize", "zsize", "qsize", "hclear", "zclear", "qclear", "multi_set",
+  @false_or_value_reply ["getbit", "setbit", "countbit", "strlen", "setx", "setnx", 
+    "zset", "hset", "qpush", "qpush_front", "qpush_back","zdel", "hdel", "hsize", 
+    "zsize", "qsize", "hclear", "zclear", "qclear", "multi_set", "ttl",
     "multi_del", "multi_hset", "multi_hdel", "multi_zset", "multi_zdel", "incr",
     "decr", "zincr", "zdecr", "hincr", "hdecr", "zget", "zrank", "zrrank", "zcount",
     "zsum", "zremrangebyrank", "zremrangebyscore"]

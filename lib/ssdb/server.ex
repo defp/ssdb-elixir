@@ -142,19 +142,19 @@ defmodule SSDB.Server do
     end
   end
 
-  @bool_reply ["exists", "hexists", "zexists", "set", "del", "setnx"]
+  @bool_reply ["exists", "hexists", "zexists", "set", "del", "setnx", "hdel", "hset"]
+
   @multi_reply ["keys", "zkeys", "hkeys", "hlist", "zlist", "qslice"]
+
   @multi_bool_reply ["multi_exists", "multi_hexists", "multi_zexists"]
-  @kv_reply ["scan","rscan","zscan","zrscan","zrange","zrrange","hscan","hrscan",
-    "hgetall","multi_hsize","multi_zsize","multi_get","multi_hget","multi_zget"]
-  @single_reply ["get","substr","getset","hget","qget","qfront", "qback",
-    "qpop","qpop_front","qpop_back", "incr", "getbit", "setbit"]
-  @false_or_value_reply ["countbit", "strlen", "setx",
-    "zset", "hset", "qpush", "qpush_front", "qpush_back","zdel", "hdel", "hsize",
-    "zsize", "qsize", "hclear", "zclear", "qclear", "multi_set", "ttl",
-    "multi_del", "multi_hset", "multi_hdel", "multi_zset", "multi_zdel",
-    "decr", "zincr", "zdecr", "hincr", "hdecr", "zget", "zrank", "zrrank", "zcount",
-    "zsum", "zremrangebyrank", "zremrangebyscore"]
+
+  @kv_reply ["scan","rscan","zscan","zrscan","zrange","zrrange","hscan","hrscan", "hgetall","multi_hsize","multi_zsize","multi_get","multi_hget","multi_zget"]
+
+  @single_reply ["get","substr","getset","hget","qget","qfront", "qback", "qpop","qpop_front","qpop_back", "incr", "getbit", "setbit", "hsize"]
+
+  @false_or_value_reply ["countbit", "strlen", "setx", "zset", "qpush", "qpush_front", "qpush_back","zdel",
+    "zsize", "qsize", "hclear", "zclear", "qclear", "multi_set", "ttl", "multi_del", "multi_hset", "multi_hdel", "multi_zset", "multi_zdel",
+    "decr", "zincr", "zdecr", "hincr", "hdecr", "zget", "zrank", "zrrank", "zcount", "zsum", "zremrangebyrank", "zremrangebyscore"]
 
   defp get_reply("zavg", values) do
     List.first(values) |> String.to_float

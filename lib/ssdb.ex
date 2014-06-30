@@ -1,11 +1,9 @@
 defmodule SSDB do
 
   @type key :: binary | atom
-  @type req_value :: binary | atom | integer | list
-  @type rsp_value :: binary | boolean | list | integer
-  @type reply_state :: :ok | :not_found | :error | :fail | :client_error
-  @type return_value :: {reply_state, rsp_value} | {reply_state}
-
+  @type req_type :: binary | atom | integer | list
+  @type rsp_type :: binary | boolean | list | integer
+  @type return_value :: {:ok, rsp_type} | {:error, rsp_type} | {:fail, rsp_type}| {:not_found} | {:client_error}
 
   def start(options \\  []) do
     GenServer.start SSDB.Server, options, []
@@ -15,18 +13,17 @@ defmodule SSDB do
     GenServer.start_link SSDB.Server,  options, []
   end
 
-
   @doc """
   For example:
     {:ok, pid} = SSDB.start
     {:ok, true} = SSDB.set pid, "a", 3
   """
-  @spec set(pid, key, req_value) :: return_value
+  @spec set(pid, key, req_type) :: return_value
   def set(pid, key, value) do
     call(pid, ["set", key, value])
   end
 
-  @spec setx(pid, key, req_value, integer) :: return_value
+  @spec setx(pid, key, req_type, integer) :: return_value
   def setx(pid, key, value, ttl) do
     call(pid, ["setx", key, value, ttl])
   end
@@ -80,14 +77,43 @@ defmodule SSDB do
     call(pid, ["multi_del" | keys])
   end
 
+  ## api for hashmap ##
+
+  def hset(pid, name, key, value) do
+    call(pid, ["hset", name, key, value])
+  end
+
+  def hget(pid, name, key) do
+    call(pid, ["hget", name, key])
+  end
+
+  def hdel(pid, name, key) do
+    call(pid, ["hdel", name, key])
+  end
+
+  def hexists(pid, name, key) do
+    call(pid, ["hexists", name, key]) 
+  end
+
+  def hsize(pid, name) do
+    call(pid, ["hsize", name]) |> int_reply
+  end
+
   @doc """
-  send request to ssdb server, request is a list with command
-  and args
+  send request to ssdb server, request is a list with command and args
   For example:
       SSDB.call pid, ["set", "a", "1"]
   """
   @spec call(pid, list) :: return_value
   def call(pid, request) when is_list(request) do
     GenServer.call(pid, {:request, request})
+  end
+
+  @spec int_reply(binary) :: integer
+  defp int_reply(rsp) do
+    case rsp do
+      {:ok, value} -> {:ok, String.to_integer(value)}
+      _ -> rsp
+    end
   end
 end

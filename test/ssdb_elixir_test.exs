@@ -1,5 +1,5 @@
 defmodule SSDBTest do
-  use ExUnit.Case
+  use ExUnit.Case, aysnc: false
 
   setup do
     {:ok, pid} = SSDB.start
@@ -15,24 +15,24 @@ defmodule SSDBTest do
 
   test "del", %{pid: pid} do
     {:ok, v} = SSDB.del pid, "ssdb"
-    assert v
+    assert v == true
   end
 
   test "get not found", %{pid: pid} do
-    {v} = SSDB.get pid, "abcd"
+    {v, []} = SSDB.get pid, "abcd"
     assert v == :not_found
   end
 
   test "exists", %{pid: pid} do
     {:ok, v} = SSDB.exists pid, "exists"
-    assert !v
+    assert v == false
   end
 
   test "setnx", %{pid: pid} do
     {:ok, v} = SSDB.setnx pid, "setnx", "test"
-    assert v
+    assert v == true
     {:ok, v} = SSDB.setnx pid, "setnx", "test"
-    assert !v
+    assert v == false
     SSDB.del pid, "setnx"
   end
 
@@ -46,17 +46,17 @@ defmodule SSDBTest do
   test "incr", %{pid: pid} do
     {:ok, true} = SSDB.set pid, "incr", 1
     {:ok, v} = SSDB.incr pid, "incr", 2
-    assert v == "3"
+    assert v == 3
     SSDB.del pid, "incr"
   end
 
   test "multi_set multi_get multi_del", %{pid: pid} do
     {:ok, num} = SSDB.multi_set pid, %{a: 1, b: 2, c: 3}
-    assert num == "3"
+    assert num == 3
     {:ok, map} = SSDB.multi_get pid, ["a", "b", "c"]
     assert map["a"] == "1"
     {:ok, num1} = SSDB.multi_del pid, ["a", "b", "c"]
-    assert num1 == "3"
+    assert num1 == 3
   end
 
   test "hset hget hdel", %{pid: pid} do

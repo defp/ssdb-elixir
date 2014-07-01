@@ -72,8 +72,8 @@ defmodule SSDB.Server do
   end
 
   defp reply(value, queue) do
-    {{:value, {from, command}}, new_queue} = :queue.out(queue)
-    response = ssdb_response(value, command)
+    {{:value, from}, new_queue} = :queue.out(queue)
+    response = ssdb_response(value)
     GenServer.reply(from, response)
     new_queue
   end
@@ -88,17 +88,15 @@ defmodule SSDB.Server do
   end
 
   defp query(state, from, request) do
-    command = List.first(request)
     case :gen_tcp.send(state.socket, create_request(request)) do
       :ok ->
-        new_queue = :queue.in({from, command}, state.queue)
+        new_queue = :queue.in(from, state.queue)
         state = %State{state | queue: new_queue}
         {:noreply, state}
       {:error, reason} ->
         {:reply, {:error, reason}, state}
     end
   end
-
 
   @socket_options [:binary, {:active, :once}, {:packet, :raw}, {:reuseaddr, true}]
   defp connect(state) do
@@ -131,7 +129,7 @@ defmodule SSDB.Server do
     [chunk|parse_binary(rest)]
   end
 
-  defp ssdb_response(response, command) do
+  defp ssdb_response(response) do
     [status | values] = response
     {String.to_atom(status), values}
   end

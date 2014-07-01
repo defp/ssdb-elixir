@@ -128,6 +128,7 @@ defmodule SSDB do
     end
   end
 
+  @spec kv_reply(rsp_type) :: map
   def kv_reply(response) do
     case response do
       {:ok, values} -> {:ok, list_to_map(values)}

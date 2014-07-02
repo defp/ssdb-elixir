@@ -106,7 +106,6 @@ defmodule SSDB do
     GenServer.call(pid, {:request, request})
   end
 
-  @spec int_reply(binary) :: integer
   defp int_reply(response) do
     case response do
       {:ok, values} -> {:ok, String.to_integer(List.first(values))}
@@ -121,15 +120,14 @@ defmodule SSDB do
     end
   end
 
-  def bool_reply(response) do
+  defp bool_reply(response) do
     case response do
       {:ok, values} -> {:ok, List.first(values) == "1"}
       _ -> response
     end
   end
 
-  @spec kv_reply(rsp_type) :: map
-  def kv_reply(response) do
+  defp kv_reply(response) do
     case response do
       {:ok, values} -> {:ok, list_to_map(values)}
       _ -> response

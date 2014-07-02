@@ -1,17 +1,13 @@
 defmodule SSDB.Server do
   use GenServer
 
-  defmodule State do
-    defstruct host: nil, port: nil, socket: nil, queue: nil
-  end
-
   def default_options do
     [ host: '127.0.0.1', port: 8888 ]
   end
 
   def init(options) do
     options = Dict.merge(default_options, options)
-    state = %State{ host: options[:host], port: options[:port],
+    state = %{host: options[:host], port: options[:port],
       socket: nil, queue: :queue.new}
 
     case connect(state) do
@@ -34,12 +30,12 @@ defmodule SSDB.Server do
     {:stop, :normal, :ok, state}
   end
 
-  def handle_info({:tcp, socket, data}, %State{socket: socket} = state) do
+  def handle_info({:tcp, socket, data}, %{socket: socket} = state) do
     :ok = :inet.setopts(socket, [{:active, :once}])
     {:noreply, handle_response(data, state)}
   end
 
-  def handle_info({:tcp, socket, _}, %State{socket: our_socket} = state)
+  def handle_info({:tcp, socket, _}, %{socket: our_socket} = state)
     when our_socket != socket do
       {:noreply, state}
   end
@@ -48,7 +44,7 @@ defmodule SSDB.Server do
     {:noreply, state}
   end
 
-  def handle_info({:tcp_closed, _socket}, %State{queue: queue} = state) do
+  def handle_info({:tcp_closed, _socket}, %{queue: queue} = state) do
     reply_all({:error, :tcp_closed}, queue)
     {:stop, :normal, %{state | socket: nil}}
   end
@@ -68,7 +64,7 @@ defmodule SSDB.Server do
     new_queue = data
                 |> parse_binary
                 |> reply(state.queue)
-    %State{state | queue: new_queue}
+    %{state | queue: new_queue}
   end
 
   defp reply(value, queue) do
@@ -91,7 +87,7 @@ defmodule SSDB.Server do
     case :gen_tcp.send(state.socket, create_request(request)) do
       :ok ->
         new_queue = :queue.in(from, state.queue)
-        state = %State{state | queue: new_queue}
+        state = %{state | queue: new_queue}
         {:noreply, state}
       {:error, reason} ->
         {:reply, {:error, reason}, state}

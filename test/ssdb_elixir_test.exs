@@ -81,4 +81,13 @@ defmodule SSDBTest do
     assert v == 1
     {:ok, true} = SSDB.hdel pid, "ha", "k"
   end
+
+  test "hgetall", %{pid: pid} do
+    {:ok, true} = SSDB.hset pid, "ha", "k1", "v1"
+    {:ok, true} = SSDB.hset pid, "ha", "k2", "v2"
+    {:ok, v} =  SSDB.hgetall pid, "ha"
+    assert v["k1"] == "v1"
+    {:ok, true} = SSDB.hdel pid, "ha", "k1"
+    {:ok, true} = SSDB.hdel pid, "ha", "k2"
+  end
 end

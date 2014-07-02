@@ -6,10 +6,12 @@ defmodule SSDB do
   @type value :: boolean | list | binary
   @type rsp_type :: {status, value}
 
+  @spec start(Keyword.t) :: GenServer.on_start
   def start(options \\  []) do
     GenServer.start SSDB.Server, options, []
   end
 
+  @spec start_link(Keyword.t) :: GenServer.on_start
   def start_link(options \\ []) do
     GenServer.start_link SSDB.Server,  options, []
   end
@@ -94,6 +96,10 @@ defmodule SSDB do
     call(pid, ["hsize", name]) |> int_reply
   end
 
+  def hgetall(pid, name) do
+    call(pid, ["hgetall", name]) |> kv_reply
+  end
+
   @doc """
   send request to ssdb server, request is a list with command and args
   For example:
@@ -106,6 +112,7 @@ defmodule SSDB do
     GenServer.call(pid, {:request, request})
   end
 
+  @spec int_reply(binary) :: integer
   defp int_reply(response) do
     case response do
       {:ok, values} -> {:ok, String.to_integer(List.first(values))}

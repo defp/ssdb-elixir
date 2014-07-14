@@ -1,7 +1,7 @@
 defmodule SSDBTest do
   use ExUnit.Case, aysnc: false
 
-  setup do
+  setup_all do
     {:ok, pid} = SSDB.start
     {:ok, pid: pid}
   end

@@ -8,95 +8,95 @@ defmodule SSDB do
 
   @spec start(Keyword.t) :: GenServer.on_start
   def start(options \\  []) do
-    GenServer.start SSDB.Server, options, []
+    GenServer.start SSDB.Server, options, [name: :ssdb]
   end
 
   @spec start_link(Keyword.t) :: GenServer.on_start
   def start_link(options \\ []) do
-    GenServer.start_link SSDB.Server,  options, []
+    GenServer.start_link SSDB.Server,  options, [name: :ssdb]
   end
 
   @spec set(pid, key, req_type) :: rsp_type
-  def set(pid, key, value) do
+  def set(pid \\ nil, key, value) do
     call(pid, ["set", key, value]) |> bool_reply
   end
 
   @spec setx(pid, key, req_type, integer) :: rsp_type
-  def setx(pid, key, value, ttl) do
+  def setx(pid \\ nil, key, value, ttl) do
     call(pid, ["setx", key, value, ttl]) |> bool_reply
   end
 
   @spec expire(pid, key, integer) :: rsp_type
-  def expire(pid, key, ttl) do
+  def expire(pid \\ nil, key, ttl) do
     call(pid, ["expire", key, ttl]) |> single_reply
   end
 
   @spec ttl(pid, key) :: rsp_type
-  def ttl(pid, key) do
+  def ttl(pid \\ nil, key) do
     call(pid, ["ttl", key]) |> single_reply
   end
 
   @spec get(pid, key) :: rsp_type
-  def get(pid, key) do
+  def get(pid \\ nil, key) do
     call(pid, ["get", key]) |> single_reply
   end
 
-  def del(pid, key) do
+  def del(pid \\ nil, key) do
     call(pid, ["del", key]) |> bool_reply
   end
 
-  def exists(pid, key) do
+  def exists(pid \\ nil, key) do
     call(pid, ["exists", key]) |> bool_reply
   end
 
-  def setnx(pid, key, value) do
+  def setnx(pid \\ nil, key, value) do
     call(pid, ["setnx", key, value]) |> bool_reply
   end
 
-  def getset(pid, key, value) do
+  def getset(pid \\ nil, key, value) do
     call(pid, ["getset", key, value]) |> single_reply
   end
 
-  def incr(pid, key, num) do
+  def incr(pid \\ nil, key, num) do
     call(pid, ["incr", key, num]) |> int_reply
   end
 
-  def multi_set(pid, kvs) when is_map(kvs) do
+  def multi_set(pid \\ nil, kvs) when is_map(kvs) do
     values = Enum.map(kvs, fn({k,v}) -> [k,v] end) |> List.flatten
     call(pid, ["multi_set" | values]) |>  int_reply
   end
 
-  def multi_get(pid, keys) when is_list(keys) do
+  def multi_get(pid \\ nil, keys) when is_list(keys) do
     call(pid, ["multi_get" | keys]) |> kv_reply
   end
 
-  def multi_del(pid, keys) when is_list(keys) do
+  def multi_del(pid \\ nil, keys) when is_list(keys) do
     call(pid, ["multi_del" | keys]) |> int_reply
   end
 
   ## api for hashmap ##
 
-  def hset(pid, name, key, value) do
+  def hset(pid \\ nil, name, key, value) do
     call(pid, ["hset", name, key, value]) |> bool_reply
   end
 
-  def hget(pid, name, key) do
+  def hget(pid \\ nil, name, key) do
     call(pid, ["hget", name, key]) |> single_reply
   end
 
-  def hdel(pid, name, key) do
+  def hdel(pid \\ nil, name, key) do
     call(pid, ["hdel", name, key]) |> bool_reply
   end
 
-  def hexists(pid, name, key) do
+  def hexists(pid \\ nil, name, key) do
     call(pid, ["hexists", name, key]) |> bool_reply
   end
 
-  def hsize(pid, name) do
+  def hsize(pid \\ nil, name) do
     call(pid, ["hsize", name]) |> int_reply
   end
 
-  def hgetall(pid, name) do
+  def hgetall(pid \\ nil, name) do
     call(pid, ["hgetall", name]) |> kv_reply
   end
 
@@ -109,7 +109,7 @@ defmodule SSDB do
   """
   @spec call(pid, list) :: {status, list}
   def call(pid, request) when is_list(request) do
-    GenServer.call(pid, {:request, request})
+    GenServer.call(pid || client_pid, {:request, request})
   end
 
   @spec int_reply(binary) :: integer
@@ -146,5 +146,10 @@ defmodule SSDB do
     [key, value | rest] = list
     map = Map.put(%{}, key, value)
     Map.merge(map, list_to_map(rest))
+  end
+
+  @spec client_pid() :: pid
+  defp client_pid do
+    Process.whereis(:ssdb)
   end
 end

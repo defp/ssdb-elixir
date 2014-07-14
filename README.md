@@ -22,6 +22,13 @@ iex(7)>
 
 ```
 
+## Installation
+
+Releases are published through [hex.pm](https://hex.pm/). Add as a dependency in your mix.exs file:
+
+    defp deps do
+      [ { :ssdb_elixir, "~> 0.2.2" } ]
+    end
 
 TODO:
   * add more command & test

@@ -11,6 +11,10 @@ defmodule SSDB do
     GenServer.start SSDB.Server, options, [name: :ssdb]
   end
 
+  def stop(pid) do
+    GenServer.call(pid || client_pid, :stop)
+  end
+
   @spec start_link(Keyword.t) :: GenServer.on_start
   def start_link(options \\ []) do
     GenServer.start_link SSDB.Server,  options, [name: :ssdb]
@@ -74,7 +78,7 @@ defmodule SSDB do
     call(pid, ["multi_del" | keys]) |> int_reply
   end
 
-  ## api for hashmap ##
+  # api for hashmap
 
   def hset(pid \\ nil, name, key, value) do
     call(pid, ["hset", name, key, value]) |> bool_reply

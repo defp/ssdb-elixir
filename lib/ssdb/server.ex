@@ -18,10 +18,6 @@ defmodule SSDB.Server do
     end
   end
 
-  def stop(pid) do
-    GenServer.call(pid, :stop)
-  end
-
   def handle_call({:request, req}, from, state) do
     query(state, from, req)
   end
@@ -121,7 +117,7 @@ defmodule SSDB.Server do
 
   defp parse_binary(binary) do
     {size, "\n" <> rest} = Integer.parse(binary)
-    <<chunk :: [binary, size(size)], "\n", rest :: binary>> = rest
+    <<chunk::binary-size(size), "\n", rest::binary>> = rest
     [chunk|parse_binary(rest)]
   end
 

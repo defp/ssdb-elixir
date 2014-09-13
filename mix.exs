@@ -3,8 +3,8 @@ defmodule SSDB.Mixfile do
 
   def project do
     [app: :ssdb,
-     version: "0.2.3",
-     elixir: "~> 0.14.2",
+     version: "0.2.4",
+     elixir: "~> 1.0.0",
      deps: deps,
      description: description,
      source_url: "https://github.com/lidashuang/ssdb-elixir",

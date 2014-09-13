@@ -121,7 +121,7 @@ defmodule SSDB.Server do
 
   defp parse_binary(binary) do
     {size, "\n" <> rest} = Integer.parse(binary)
-    <<chunk :: [binary, size(size)], "\n", rest :: binary>> = rest
+    <<chunk::binary-size(size), "\n", rest::binary>> = rest
     [chunk|parse_binary(rest)]
   end
 

@@ -74,7 +74,7 @@ defmodule SSDB do
     call(pid, ["multi_del" | keys]) |> int_reply
   end
 
-  ## api for hashmap ##
+  # api for hashmap
 
   def hset(pid \\ nil, name, key, value) do
     call(pid, ["hset", name, key, value]) |> bool_reply

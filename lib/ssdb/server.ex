@@ -18,10 +18,6 @@ defmodule SSDB.Server do
     end
   end
 
-  def stop(pid) do
-    GenServer.call(pid, :stop)
-  end
-
   def handle_call({:request, req}, from, state) do
     query(state, from, req)
   end

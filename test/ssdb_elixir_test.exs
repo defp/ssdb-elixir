@@ -19,7 +19,7 @@ defmodule SSDBTest do
   end
 
   test "get not found", %{pid: pid} do
-    {v, []} = SSDB.get pid, "abcd"
+    {v, [""]} = SSDB.get pid, "abcd"
     assert v == :not_found
   end
 

@@ -52,14 +52,10 @@ defmodule SSDB.Server do
     end
   end
 
-  def code_change(_oldvsn, state, _extra) do
-    {:ok, state}
-  end
-
   defp handle_response(data, state) do
     new_queue = data
-                |> parse_binary
-                |> reply(state.queue)
+      |> parse_binary
+      |> reply(state.queue)
     %{state | queue: new_queue}
   end
 
@@ -102,8 +98,9 @@ defmodule SSDB.Server do
   end
 
   defp create_request(args) do
-    bin = Enum.map(Enum.map(args, fn(arg) -> to_binary(arg) end),
-      fn(arg) -> "#{byte_size(arg)}\n#{arg}\n" end)
+    bin = args
+      |> Enum.map(&to_binary/1)
+      |> Enum.map(&("#{byte_size(&1)}\n#{&1}\n"))
     bin ++ ["\n"]
   end
 

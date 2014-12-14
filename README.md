@@ -27,8 +27,5 @@ iex(7)>
 Releases are published through [hex.pm](https://hex.pm/). Add as a dependency in your mix.exs file:
 
     defp deps do
-      [ { :ssdb_elixir, "~> 0.2.4" } ]
+      [ { :ssdb_elixir, "~> 0.2.5" } ]
     end
-
-TODO:
-  * add more command & test

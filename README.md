@@ -1,6 +1,8 @@
 SSDB client
 ==============
 
+[![Build Status](https://travis-ci.org/lidashuang/ssdb-elixir.svg?branch=master)](https://travis-ci.org/lidashuang/ssdb-elixir)
+
 SSDB client for Elixir
 
 ## Installation

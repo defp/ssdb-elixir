@@ -10,7 +10,7 @@ before_install:
   - wget -q https://github.com/ideawu/ssdb/archive/master.zip
   - unzip master.zip
   - cd ssdb-master && make
-  - ./ssdb-server -d ssdb.conf
+  - ./ssdb-server -d ssdb.conf && cd ..
 before_script:
   - export PATH=`pwd`/elixir/bin:$PATH
   - mix local.hex --force

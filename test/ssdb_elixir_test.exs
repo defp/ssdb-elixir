@@ -21,6 +21,6 @@ defmodule SSDBTest do
 
     {status, v} = SSDB.query ["get", "abcd"]
     assert status == :not_found
-    assert v == [""]
+    assert v == []
   end
 end

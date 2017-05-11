@@ -6,7 +6,7 @@ defmodule SSDB.Server do
   end
 
   def init(options) do
-    options = Dict.merge(default_options, options)
+    options = Dict.merge(default_options(), options)
     state = %{host: options[:host], port: options[:port],
       socket: nil, queue: :queue.new}
 

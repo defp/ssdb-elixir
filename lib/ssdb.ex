@@ -26,7 +26,7 @@ defmodule SSDB do
   """
   @spec stop(pid) :: :ok
   def stop(pid) do
-    GenServer.call(pid || client_pid, :stop)
+    GenServer.call(pid || client_pid(), :stop)
   end
 
   @doc """
@@ -42,7 +42,7 @@ defmodule SSDB do
   ```
   """
   @spec query(pid, list) :: {status, list}
-  def query(pid \\ client_pid, request) when is_list(request) do
+  def query(pid \\ client_pid(), request) when is_list(request) do
     GenServer.call(pid, {:request, request})
   end
 

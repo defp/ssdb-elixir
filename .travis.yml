@@ -5,7 +5,7 @@ notifications:
   recipients:
     - ldshuang@gmail.com
 otp_release:
-  - 17.1
+  - 17.4
 before_install:
   - wget -q https://github.com/ideawu/ssdb/archive/master.zip
   - unzip master.zip

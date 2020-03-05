@@ -9,13 +9,15 @@ SSDB client for Elixir
 
 Releases are published through [hex.pm](https://hex.pm/). Add as a dependency in your mix.exs file:
 
-    defp deps do
-      [ { :ssdb, "~> 0.3.0" } ]
-    end
+```elixir
+defp deps do
+  [ { :ssdb, "~> 0.3.0" } ]
+end
+```
 
 ## Example:
 
-```iex
+```elixir
 Interactive Elixir (1.0.2) - press Ctrl+C to exit (type h() ENTER for help)
 iex(1)> {:ok, pid} = SSDB.start
 {:ok, #PID<0.79.0>}
